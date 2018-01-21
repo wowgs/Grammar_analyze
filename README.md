@@ -47,11 +47,11 @@
   
 - To test all algorithms with ALL tests:
 
-  ```py test.py all```
+  ```python test.py all```
   
    - Approximate time ~2.5 minutes for all
   
 - To test all algorithms with SMALL tests:
 
-  ```py test.py small```
+  ```python test.py small```
 
