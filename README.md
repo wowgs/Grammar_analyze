@@ -4,6 +4,7 @@
 
   - matrix.py
   - glr.py
+  - gll.py
 
 ## Requirements
 
@@ -13,29 +14,44 @@
 
 ```matrix.py``` - Grammar in Homsky normal form
 
-```glr.py``` - Grammar in 'normal' form
+```glr.py``` - Grammar in graph form
+
+```gll.py``` - Grammar in graph form
 
 ### How to run
 
 - Matrix:
   ```
-  py matrix.py data/Grammar/*_hom.dot data/Graph/*.dot <res.txt (opional)>
+  python matrix.py data/Grammar/*_hom.dot data/Graph/*.dot <res.txt (opional)>
   ```
 
 - GLR:
    ```
-   py glr.py data/Grammar/*.dot data/Graph/*.dot <res.txt (optional)>
+   python glr.py data/Grammar/*_auto.dot data/Graph/*.dot <res.txt (optional)>
+   ```
+   
+- GLL:
+   ```
+   python gll.py data/Grammar/*_auto.dot data/Graph/*.dot <res.txt (optional)>
    ```
 
 ### Test
 
 - To test specific algo:
 
-  ```py test.py matrix```
+  ```python test.py matrix```
   
-  ```py test.py glr```
+  ```python test.py glr```
   
-- To test all algorithms:
+  ```python test.py gll```
+  
+- To test all algorithms with ALL tests:
 
   ```py test.py all```
+  
+   - Approximate time ~2.5 minutes for all
+  
+- To test all algorithms with SMALL tests:
+
+  ```py test.py small```
 
