@@ -1,6 +1,8 @@
 from parse import *
 from matrix import *
 from glr import *
+from gll import *
+from small_tests import *
 from time import time
 import sys
 
@@ -8,23 +10,25 @@ answers = [[810, 2164, 2499, 2540, 15454, 15156, 4118, 9472, 17634, 66572, 56195
 
 
 graph_names = ['skos.dot', 'generations.dot', 'travel.dot', 'univ-bench.dot', 'atom-primitive.dot', 'biomedical-mesure-primitive.dot', 'foaf.dot', 'people_pets.dot', 'funding.dot', 'wine.dot', 'pizza.dot']
+gr_names = ['Q1', 'Q2']
+algos = {'matrix' : matrix, 'glr' : glr, 'gll' : gll}
+gr_suff = {'matrix' : '_hom.dot', 'glr' : '_auto.dot', 'gll' : '_auto.dot'}
+parse_name = {'matrix' : parse_grammar, 'glr' : parse_gram_automata, 'gll' : parse_gram_automata}
 
-def test(algo):
-    total_time = [0, 0]
-    gr_names = {'matrix' : ['Q1_hom.dot', 'Q2_hom.dot'], 'glr' : ['Q1.dot', 'Q2.dot']}
-    for ind, x in enumerate(gr_names[algo]):
-        print('Testing', algo, 'algo with', x, 'grammar\n')
-        gram = parse_gram_hom(r'data/Grammar/' + x)
+def test_standart(algo):
+    for ind, x in enumerate(gr_names):
+        total_time = 0
+        print('Testing', algo.upper(), 'algo with', x, 'grammar\n')
+        gram = parse_name[algo](r'data/Grammar/' + x + gr_suff[algo])
         for y in range(11):
-            d = parse_graph(r'data/Graph/' + graph_names[y])
+            graph = parse_graph(r'data/Graph/' + graph_names[y])
             
             time_c = time()
-            if algo == 'matrix':
-                res = matrix(d, gram)
-            elif algo == 'glr':
-                res = glr(d, gram)
+
+            res = algos[algo](gram, graph) #Вызов Matrix
+
             time_c = time() - time_c
-            total_time[ind] += time_c
+            total_time += time_c
             time_c = str(int(time_c * 10000) / 10000)
 
             s_count = len([x for x in res if x[1] == 'S'])
@@ -35,20 +39,28 @@ def test(algo):
             else:
                 print(graph_names[y] + sepr + time_c + 's' + ' ' * (13 - len(time_c)) + 'FAIL')
 
-        total_time[ind] = int(total_time[ind] * 10000) / 10000
-        print("\n" + x + " time - " + str(total_time[ind]) + "s")
-        print()
-    print("\nTotal", algo, "time - " + str(sum(total_time)) + "s")
+        total_time = int(total_time * 10000) / 10000
+        print("\n" + x + " time - " + str(total_time) + "s")
+        print('-' * 56)
+
+def test(param):
+    if param == 'all':
+        for x in algos:
+            small_test(x)
+            test_standart(x)
+    elif param == 'small':
+        for x in algos:
+            small_test(x)
+    elif param in algos:
+        small_test(param)
+        test_standart(param)
+    else:
+        print("Incorrect args. Try 'py test.py [all | small| matrix | glr | gll'")
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("Incorrect args. Try 'py test.py [all | matrix | glr]'")
+    if len(sys.argv) != 2:
+        print("Incorrect args. Try 'py test.py [all | small| matrix | glr | gll]'")
         exit(1)
-    if sys.argv[1] == 'all':
-        test('matrix')
-        print('\n')
-        test('glr')
-    else:
-        test(sys.argv[1])
+    test(sys.argv[1])
         
             

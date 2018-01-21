@@ -1,61 +1,80 @@
-from copy import deepcopy
-from time import time
 from parse import *
+from itertools import product
 import sys
-def rek(mat, gr_rules, fr, cur, prod, len_left, fl):
-    for x in gr_rules:
-        if prod in gr_rules[x]:
-            if x not in mat[fr][cur]:
-                mat[fr][cur].append(x)
-                fl[0] = True
-    if len_left == 0:
-        return
-    for x in filter(lambda k: bool(mat[cur][k]), range(len(mat[cur]))):
-        for y in mat[cur][x]:
-            rek(mat, gr_rules, fr, x, prod + [y], len_left - 1, fl)
-    return
 
 
-def glr(D, G):
+def bup(rfa, graph, pos_ks, pos_g, nonterm, fi_state_rev):
+    
+    flag = False
+    pairs_set = {(pos_ks, pos_g)}
+    used = set()
+    
+    while pairs_set:
+        rfa_pos, gr_pos = pairs_set.pop()
+        used.add((rfa_pos, gr_pos))
+        
+        if rfa_pos in fi_state_rev and nonterm in fi_state_rev[rfa_pos]:
+            item = graph[pos_g][gr_pos]
+            l = len(item)
+            item.update(fi_state_rev[rfa_pos])
+            if l < len(item):
+                flag = True
 
-    n = len(D)
-    mat = deepcopy(D)
-    gr_rules = deepcopy(G.rules)
-    len_path = 0
-    for x in gr_rules.values():
-        for y in x:
-            len_path = max(len_path, len(y))
+        for rfa_to, rfa_label in rfa.trans[rfa_pos]:
+            for gr_to in graph[gr_pos]:
+                for gr_label in graph[gr_pos][gr_to]:
+                    if rfa_label == gr_label:
+                        if (rfa_to, gr_to) not in used:
+                            pairs_set.add((rfa_to, gr_to))
 
-    time_gc = time()
-    time_gx = 0
-    flag = [True]
-    while flag[0]:
-        flag[0] = False
-        for x in range(n):
-            if (time() - time_gc >= 1):
-                time_gc = time()
-                print("Parsing" + "." * time_gx + " " * 5, end = '\r')
-                time_gx = (time_gx + 1) % 4
-            rek(mat, gr_rules, x, x, [], len_path, flag)
+    return flag
 
-    return [(i, label, j) for i in range(n) for j in range(n) for label in mat[i][j] if label in gr_rules.keys()]
+
+def glr(rfa, graph):
+    ans = set()
+
+    graph_states = set()
+    for fr in graph:
+        graph_states.update(set(graph[fr]))
+        graph_states.add(fr)
+
+    fi_state_rev = defaultdict(set)
+
+    for x in rfa.fi_states:
+        for y in rfa.fi_states[x]:
+            fi_state_rev[y].add(x)
+
+    flag = True
+    while flag:
+        flag = False
+        for gr_pos in graph_states:
+            for nonterm in rfa.st_states:
+                for rfa_pos in rfa.st_states[nonterm]:
+                    flag |= bup(rfa, graph, rfa_pos, gr_pos, nonterm, fi_state_rev)
+
+    for fr in graph:
+        for to in graph[fr]:
+                for token in graph[fr][to]:
+                    if any(ch.isupper() for ch in token):
+                        ans.add((fr, token, to))
+
+    return list(ans)
 
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print("Wrong arguments")
-        exit(1)
+        print("Incorrect number of input parameters. Please try to start script like this:"
+              "python glr.py data/Grammar/Q1_auto.dot data/Graph/skos.dot (optional)res.txt")
+        sys.exit()
 
-    res = glr(parse_graph(sys.argv[2]), parse_gram_hom(sys.argv[1]))
-    
+    res = '\n'.join(map(str, glr(parse_gram_automata(sys.argv[1]), parse_graph(sys.argv[2]))))
+
     if len(sys.argv) == 3:
-        for x in res:
-            print(str(x))
-
+        print(res)
     else:
-        with open(sys.argv[3], 'w') as fo:
-            for x in res:
-                fo.write(str(x))
-                fo.write('\n')
-            fo.close()
-        
+        with open(sys.argv[3], 'w') as f:
+            f.write(res)
+            f.close()
+
+
+
